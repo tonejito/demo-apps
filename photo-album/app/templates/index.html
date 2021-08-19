@@ -62,11 +62,11 @@
   <body>
     <div class='container'>
     <div class='from'>
-      <form method="POST" action="/upload" enctype=multipart/form-data>
+      <form method="POST" action="upload" enctype=multipart/form-data>
         <label for="file-upload" class="custom-file-upload btn">
-          <i class="fa fa-cloud-upload"></i> Select Photo
+          <i class="fa fa-cloud-upload">Select Photo</i>
         </label>
-        <input id="file-upload" type="file" name=file />
+        <input id="file-upload" type="file" name=file accept="image/*" />
         <input class="button btn" type="submit" value=Upload>
         </form>
     </div>
