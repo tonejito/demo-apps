@@ -1,20 +1,32 @@
 FROM registry.access.redhat.com/ubi8/python-38 AS base
 
-ENV FLASK_DIR=/app \
+USER root
+
+RUN pip config --global set global.progress_bar off && \
+    pip install --upgrade pip
+
+FROM base AS app
+
+ENV FLASK_APP=app.py \
+    FLASK_ENV=development \
+    FLASK_DIR=/app \
+    LOG_LEVEL=info \
+    HOST=0.0.0.0 \
+    PORT=5000 \
+    UPLOAD_FOLDER=/tmp \
     BUCKET_NAME="$BUCKET_NAME" \
     ENDPOINT_URL="$ENDPOINT_URL" \
     AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
     AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY"
 
-EXPOSE 8081
+EXPOSE ${PORT}
 WORKDIR ${FLASK_DIR}
 
 ADD ./app/requirements.txt ${FLASK_DIR}/requirements.txt
 
-RUN pip config --global set global.progress_bar off && \
-    pip install --requirement requirements.txt
+RUN pip install --requirement requirements.txt
 
 COPY . /
 
-ENTRYPOINT python
-CMD app.py
+# CMD flask run --host=${HOST} --port ${PORT} --reload --no-debugger --eager-loading --with-threads
+CMD gunicorn app:app --bind ${HOST}:${PORT} --reload --preload --capture-output --log-level ${LOG_LEVEL} --access-logfile - --error-logfile -
