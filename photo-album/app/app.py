@@ -32,12 +32,9 @@ if not os.path.isdir(app.config["UPLOAD_FOLDER"]):
     app.logger.info("UPLOAD_FOLDER does not exist.")
     os.makedirs(app.config["UPLOAD_FOLDER"])
 
-# BUCKET = os.environ["BUCKET_NAME"]
 s3 = boto3.client(
     "s3",
     endpoint_url=app.config["ENDPOINT_URL"],
-    # aws_access_key_id=app.config["AWS_ACCESS_KEY_ID"],
-    # aws_secret_access_key=app.config["AWS_SECRET_ACCESS_KEY"],
     use_ssl=False,
     verify=False
 )
@@ -105,19 +102,21 @@ def list_files(s3, bucket):
     try:
         for item in s3.list_objects(Bucket=bucket)["Contents"]:
             object_key = item["Key"]
-            response = s3.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": bucket, "Key": object_key},
-                ExpiresIn=3600
-            )
-            signed_url = {
-                "url": response,
-                "name": object_key,
-                "path": os.path.basename(object_key),
-            }
-            # signed_url.update(signed_url)
-            # print(response)
-            contents.append(signed_url)
+            # Don't display items in EXCLUDE_PREFIX
+            if not str(item["Key"]).startswith("{}".format(app.config["EXCLUDE_PREFIX"])):
+                response = s3.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": bucket, "Key": object_key},
+                    ExpiresIn=3600
+                )
+                signed_url = {
+                    "url": response,
+                    "name": object_key,
+                    "path": os.path.basename(object_key),
+                }
+                # signed_url.update(signed_url)
+                # app.logger.debug(response)
+                contents.append(signed_url)
 
     except Exception as e:
         pass
